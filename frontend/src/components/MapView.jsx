@@ -21,8 +21,26 @@ const redIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-const yellowIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+const greenIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const blueIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const orangeIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -31,12 +49,27 @@ const yellowIcon = new L.Icon({
 });
 
 function MapView({ data }) {
+  const getMarkerIcon = (detection) => {
+    // Both pothole and obstacle
+    if (detection.depth > 0 && detection.hasObstacle) return orangeIcon;
+    
+    // Only obstacle
+    if (detection.hasObstacle && detection.obstacleType === 'tree') return greenIcon;
+    if (detection.hasObstacle && detection.obstacleType === 'building') return blueIcon;
+    
+    // Only pothole
+    return redIcon;
+  };
+
+  // Center map on Sri Lanka
+  const centerPosition = [7.8731, 80.7718];
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-      <div className="h-125 w-full">
+      <div className="h-[500px] w-full">
         <MapContainer
-          center={[6.9271, 79.8612]}
-          zoom={13}
+          center={centerPosition}
+          zoom={8}
           style={{ height: '100%', width: '100%' }}
         >
           <TileLayer
@@ -47,18 +80,41 @@ function MapView({ data }) {
             <Marker
               key={detection.id}
               position={[detection.lat, detection.lng]}
-              icon={detection.isDark ? yellowIcon : redIcon}
+              icon={getMarkerIcon(detection)}
             >
               <Popup>
                 <div className="p-2">
-                  <p className="font-semibold text-sm">
-                    {detection.isDark ? '🌙 Lighting Alert' : '🚧 Pothole Detected'}
+                  <p className="font-semibold text-sm mb-2">
+                    {detection.depth > 0 && detection.hasObstacle && '⚠️ Pothole + Obstacle'}
+                    {detection.depth > 0 && !detection.hasObstacle && '🚧 Pothole Detected'}
+                    {!detection.depth && detection.hasObstacle && detection.obstacleType === 'tree' && '🌳 Tree Detected'}
+                    {!detection.depth && detection.hasObstacle && detection.obstacleType === 'building' && '🏢 Building Detected'}
                   </p>
-                  {!detection.isDark && (
-                    <p className="text-xs text-slate-600">Depth: {detection.depth}cm</p>
+                  
+                  {detection.depth > 0 && (
+                    <p className="text-xs text-rose-600 font-semibold mb-1">
+                      🕳️ Pothole Depth: {detection.depth} cm
+                    </p>
                   )}
-                  <p className="text-xs text-slate-500 mt-1">
-                    {detection.lat.toFixed(4)}, {detection.lng.toFixed(4)}
+                  
+                  {detection.hasObstacle && (
+                    <div className="mb-1">
+                      <p className="text-xs text-blue-600 font-semibold">
+                        🚧 Obstacle Type: {detection.obstacleType}
+                      </p>
+                      <p className="text-xs text-green-600 font-semibold">
+                        📏 Distance from road: {detection.obstacleDistance} cm
+                      </p>
+                      {detection.obstacleDistance <= 120 && (
+                        <p className="text-xs text-orange-600 font-bold mt-1">
+                          ⚠️ Within detection range (≤120cm)
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-slate-500 mt-2">
+                    📍 {detection.lat.toFixed(4)}, {detection.lng.toFixed(4)}
                   </p>
                   <p className="text-xs text-slate-400">{detection.timestamp}</p>
                 </div>
@@ -78,7 +134,9 @@ MapView.propTypes = {
       lat: PropTypes.number.isRequired,
       lng: PropTypes.number.isRequired,
       depth: PropTypes.number.isRequired,
-      isDark: PropTypes.bool.isRequired,
+      hasObstacle: PropTypes.bool.isRequired,
+      obstacleType: PropTypes.string,
+      obstacleDistance: PropTypes.number,
       timestamp: PropTypes.string.isRequired,
     })
   ).isRequired,

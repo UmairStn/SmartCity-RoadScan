@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, Moon } from 'lucide-react';
+import { AlertTriangle, TreeDeciduous } from 'lucide-react';
 import Header from './components/Header';
 import StatsCard from './components/StatsCard';
 import MapView from './components/MapView';
@@ -10,58 +10,64 @@ function App() {
   const [data, setData] = useState(mockData);
   const [lastRefresh, setLastRefresh] = useState(new Date().toLocaleTimeString());
 
-  // Calculate stats
   const totalPotholes = data.filter(d => d.depth > 0).length;
   const deepPotholes = data.filter(d => d.depth > 8).length;
-  const lightingAlerts = data.filter(d => d.isDark).length;
+  const roadsideObstacles = data.filter(d => d.hasObstacle).length;
 
   const handleRefresh = () => {
-    // In production, fetch new data from your Node.js backend
     const now = new Date().toLocaleTimeString();
     console.log('Refreshing data at:', now);
     setLastRefresh(now);
-    setData([...mockData]); // For now, just reset to mock data
-    
-    // Show visual feedback
-    alert(`Data refreshed at ${now}`);
+    setData([...mockData]);
+    alert(`✅ Data refreshed at ${now}`);
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-blue-50 to-indigo-100">
       <Header onRefresh={handleRefresh} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <p className="text-sm text-slate-600 mb-4">Last refresh: {lastRefresh}</p>
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
+            <p className="text-gray-600 text-sm mt-1">
+              Last updated: <span className="font-semibold text-indigo-600">{lastRefresh}</span>
+            </p>
+          </div>
+        </div>
         
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatsCard
             title="Total Potholes"
             value={totalPotholes}
             icon={AlertTriangle}
-            borderColor="border-red-500"
-            bgColor="bg-red-100"
-            iconColor="text-red-600"
+            borderColor="border-rose-500"
+            bgColor="bg-rose-50"
+            iconColor="text-rose-600"
           />
           <StatsCard
             title="Deep Potholes (>8cm)"
             value={deepPotholes}
             icon={AlertTriangle}
             borderColor="border-orange-500"
-            bgColor="bg-orange-100"
+            bgColor="bg-orange-50"
             iconColor="text-orange-600"
           />
           <StatsCard
-            title="Lighting Alerts"
-            value={lightingAlerts}
-            icon={Moon}
-            borderColor="border-yellow-500"
-            bgColor="bg-yellow-100"
-            iconColor="text-yellow-600"
+            title="Roadside Obstacles"
+            value={roadsideObstacles}
+            icon={TreeDeciduous}
+            borderColor="border-green-500"
+            bgColor="bg-green-50"
+            iconColor="text-green-600"
           />
         </div>
 
-        <MapView data={data} />
+        <div className="mb-8">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">🗺️ Location Map</h3>
+          <MapView data={data} />
+        </div>
+
         <DataTable data={data} />
       </main>
     </div>
