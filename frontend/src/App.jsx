@@ -1,74 +1,91 @@
-import { useState } from 'react';
-import { AlertTriangle, TreeDeciduous } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ref, onValue } from 'firebase/database';
+import { database } from './config/firebase';
 import Header from './components/Header';
-import StatsCard from './components/StatsCard';
-import MapView from './components/MapView';
+import StatsGrid from './components/StatsGrid';
 import DataTable from './components/DataTable';
-import { mockData } from './data/mockData';
+import MapView from './components/MapView';
+import './App.css';
 
 function App() {
-  const [data, setData] = useState(mockData);
-  const [lastRefresh, setLastRefresh] = useState(new Date().toLocaleTimeString());
+  const [depthData, setDepthData] = useState([]);
+  const [liveDepth, setLiveDepth] = useState(0);
+  const [stats, setStats] = useState({
+    totalDetections: 0,
+    averageDepth: 0,
+    maxDepth: 0,
+    recentDetections: 0
+  });
 
-  const totalPotholes = data.filter(d => d.depth > 0).length;
-  const deepPotholes = data.filter(d => d.depth > 8).length;
-  const roadsideObstacles = data.filter(d => d.hasObstacle).length;
+  useEffect(() => {
+    // Listen to LIVE depth (updates every 500ms)
+    const liveDepthRef = ref(database, 'live/depth');
+    const liveUnsubscribe = onValue(liveDepthRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setLiveDepth(snapshot.val());
+      }
+    });
 
-  const handleRefresh = () => {
-    const now = new Date().toLocaleTimeString();
-    console.log('Refreshing data at:', now);
-    setLastRefresh(now);
-    setData([...mockData]);
-    alert(`✅ Data refreshed at ${now}`);
-  };
+    // Listen to depth history (only potholes > 10cm)
+    const depthRef = ref(database, 'detections/depth');
+    const historyUnsubscribe = onValue(depthRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const formattedData = Object.entries(data).map(([id, depth]) => ({
+          id,
+          depth,
+          timestamp: new Date().toLocaleString(),
+          status: depth > 15 ? 'Critical' : 'Warning'
+        }));
+
+        // Sort by most recent (last items in array)
+        formattedData.reverse();
+
+        setDepthData(formattedData);
+
+        // Calculate statistics
+        const depths = formattedData.map(d => d.depth);
+        const total = depths.length;
+        const avg = total > 0 ? (depths.reduce((a, b) => a + b, 0) / total).toFixed(1) : 0;
+        const max = total > 0 ? Math.max(...depths) : 0;
+        
+        // Count recent detections (last 10)
+        const recent = formattedData.slice(0, 10).length;
+
+        setStats({
+          totalDetections: total,
+          averageDepth: parseFloat(avg),
+          maxDepth: max,
+          recentDetections: recent
+        });
+      } else {
+        // No data yet
+        setDepthData([]);
+        setStats({
+          totalDetections: 0,
+          averageDepth: 0,
+          maxDepth: 0,
+          recentDetections: 0
+        });
+      }
+    });
+
+    return () => {
+      liveUnsubscribe();
+      historyUnsubscribe();
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-blue-50 to-indigo-100">
-      <Header onRefresh={handleRefresh} />
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100">
+      <Header />
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
-            <p className="text-gray-600 text-sm mt-1">
-              Last updated: <span className="font-semibold text-indigo-600">{lastRefresh}</span>
-            </p>
-          </div>
-        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatsCard
-            title="Total Potholes"
-            value={totalPotholes}
-            icon={AlertTriangle}
-            borderColor="border-rose-500"
-            bgColor="bg-rose-50"
-            iconColor="text-rose-600"
-          />
-          <StatsCard
-            title="Deep Potholes (>8cm)"
-            value={deepPotholes}
-            icon={AlertTriangle}
-            borderColor="border-orange-500"
-            bgColor="bg-orange-50"
-            iconColor="text-orange-600"
-          />
-          <StatsCard
-            title="Roadside Obstacles"
-            value={roadsideObstacles}
-            icon={TreeDeciduous}
-            borderColor="border-green-500"
-            bgColor="bg-green-50"
-            iconColor="text-green-600"
-          />
-        </div>
-
-        <div className="mb-8">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">🗺️ Location Map</h3>
-          <MapView data={data} />
-        </div>
-
-        <DataTable data={data} />
+        {/* <div className="mb-8">
+          <MapView />
+        </div> */}
+        <StatsGrid stats={stats} liveDepth={liveDepth} />
+        <DataTable data={depthData} />
       </main>
     </div>
   );

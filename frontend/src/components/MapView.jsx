@@ -48,98 +48,101 @@ const orangeIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-function MapView({ data }) {
-  const getMarkerIcon = (detection) => {
-    // Both pothole and obstacle
-    if (detection.depth > 0 && detection.hasObstacle) return orangeIcon;
+// function MapView({ data }) {
+//   const getMarkerIcon = (detection) => {
+//     // Both pothole and obstacle
+//     if (detection.depth > 0 && detection.hasObstacle) return orangeIcon;
     
-    // Only obstacle
-    if (detection.hasObstacle && detection.obstacleType === 'tree') return greenIcon;
-    if (detection.hasObstacle && detection.obstacleType === 'building') return blueIcon;
+//     // Only obstacle
+//     if (detection.hasObstacle && detection.obstacleType === 'tree') return greenIcon;
+//     if (detection.hasObstacle && detection.obstacleType === 'building') return blueIcon;
     
-    // Only pothole
-    return redIcon;
-  };
+//     // Only pothole
+//     return redIcon;
+//   };
 
-  // Center map on Sri Lanka
-  const centerPosition = [7.8731, 80.7718];
+//   // Center map on Sri Lanka
+//   const centerPosition = [7.8731, 80.7718];
 
+//   return (
+//     <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+//       <div className="h-[500px] w-full">
+//         <MapContainer
+//           center={centerPosition}
+//           zoom={8}
+//           style={{ height: '100%', width: '100%' }}
+//         >
+//           <TileLayer
+//             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+//             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+//           />
+//           {data.map((detection) => (
+//             <Marker
+//               key={detection.id}
+//               position={[detection.lat, detection.lng]}
+//               icon={getMarkerIcon(detection)}
+//             >
+//               <Popup>
+//                 <div className="p-2">
+//                   <p className="font-semibold text-sm mb-2">
+//                     {detection.depth > 0 && detection.hasObstacle && '⚠️ Pothole + Obstacle'}
+//                     {detection.depth > 0 && !detection.hasObstacle && '🚧 Pothole Detected'}
+//                     {!detection.depth && detection.hasObstacle && detection.obstacleType === 'tree' && '🌳 Tree Detected'}
+//                     {!detection.depth && detection.hasObstacle && detection.obstacleType === 'building' && '🏢 Building Detected'}
+//                   </p>
+                  
+//                   {detection.depth > 0 && (
+//                     <p className="text-xs text-rose-600 font-semibold mb-1">
+//                       🕳️ Pothole Depth: {detection.depth} cm
+//                     </p>
+//                   )}
+                  
+//                   {detection.hasObstacle && (
+//                     <div className="mb-1">
+//                       <p className="text-xs text-blue-600 font-semibold">
+//                         🚧 Obstacle Type: {detection.obstacleType}
+//                       </p>
+//                       <p className="text-xs text-green-600 font-semibold">
+//                         📏 Distance from road: {detection.obstacleDistance} cm
+//                       </p>
+//                       {detection.obstacleDistance <= 120 && (
+//                         <p className="text-xs text-orange-600 font-bold mt-1">
+//                           ⚠️ Within detection range (≤120cm)
+//                         </p>
+//                       )}
+//                     </div>
+//                   )}
+                  
+//                   <p className="text-xs text-slate-500 mt-2">
+//                     📍 {detection.lat.toFixed(4)}, {detection.lng.toFixed(4)}
+//                   </p>
+//                   <p className="text-xs text-slate-400">{detection.timestamp}</p>
+//                 </div>
+//               </Popup>
+//             </Marker>
+//           ))}
+//         </MapContainer>
+//       </div>
+//     </div>
+//   );
+// }
+function MapView() {
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-      <div className="h-[500px] w-full">
-        <MapContainer
-          center={centerPosition}
-          zoom={8}
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {data.map((detection) => (
-            <Marker
-              key={detection.id}
-              position={[detection.lat, detection.lng]}
-              icon={getMarkerIcon(detection)}
-            >
-              <Popup>
-                <div className="p-2">
-                  <p className="font-semibold text-sm mb-2">
-                    {detection.depth > 0 && detection.hasObstacle && '⚠️ Pothole + Obstacle'}
-                    {detection.depth > 0 && !detection.hasObstacle && '🚧 Pothole Detected'}
-                    {!detection.depth && detection.hasObstacle && detection.obstacleType === 'tree' && '🌳 Tree Detected'}
-                    {!detection.depth && detection.hasObstacle && detection.obstacleType === 'building' && '🏢 Building Detected'}
-                  </p>
-                  
-                  {detection.depth > 0 && (
-                    <p className="text-xs text-rose-600 font-semibold mb-1">
-                      🕳️ Pothole Depth: {detection.depth} cm
-                    </p>
-                  )}
-                  
-                  {detection.hasObstacle && (
-                    <div className="mb-1">
-                      <p className="text-xs text-blue-600 font-semibold">
-                        🚧 Obstacle Type: {detection.obstacleType}
-                      </p>
-                      <p className="text-xs text-green-600 font-semibold">
-                        📏 Distance from road: {detection.obstacleDistance} cm
-                      </p>
-                      {detection.obstacleDistance <= 120 && (
-                        <p className="text-xs text-orange-600 font-bold mt-1">
-                          ⚠️ Within detection range (≤120cm)
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  
-                  <p className="text-xs text-slate-500 mt-2">
-                    📍 {detection.lat.toFixed(4)}, {detection.lng.toFixed(4)}
-                  </p>
-                  <p className="text-xs text-slate-400">{detection.timestamp}</p>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
+      <div className="px-6 py-5 bg-gradient-to-r from-slate-800 to-slate-700">
+        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          🗺️ Location Map
+        </h2>
+      </div>
+      <div className="p-12 text-center bg-gradient-to-br from-slate-50 to-white">
+        <div className="text-7xl mb-4">📍</div>
+        <p className="text-xl font-semibold text-slate-700">Map Integration Coming Soon</p>
+        <p className="text-sm text-slate-500 mt-3">
+          Will display pothole locations on an interactive map
+        </p>
       </div>
     </div>
   );
 }
-
-MapView.propTypes = {
-  data: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      lat: PropTypes.number.isRequired,
-      lng: PropTypes.number.isRequired,
-      depth: PropTypes.number.isRequired,
-      hasObstacle: PropTypes.bool.isRequired,
-      obstacleType: PropTypes.string,
-      obstacleDistance: PropTypes.number,
-      timestamp: PropTypes.string.isRequired,
-    })
-  ).isRequired,
-};
 
 export default MapView;

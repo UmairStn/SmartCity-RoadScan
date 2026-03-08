@@ -2,89 +2,91 @@ import PropTypes from 'prop-types';
 
 function DataTable({ data }) {
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-      <div className="px-6 py-5 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-indigo-500">
-        <h2 className="text-2xl font-bold text-gray-800">📊 Recent Detections</h2>
-        <p className="text-sm text-gray-600 mt-1">Latest sensor readings from the field</p>
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
+      <div className="px-6 py-5 bg-gradient-to-r from-slate-800 to-slate-700">
+        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          📊 Detection History
+        </h2>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead className="bg-gray-100">
+        <table className="w-full">
+          <thead className="bg-slate-50">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                ⏰ Timestamp
+              <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                ID
               </th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                🏷️ Detection Type
+              <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                🕳️ Depth (cm)
               </th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                📏 Pothole Depth
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                 🚧 Obstacle Distance
               </th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
                 📍 Location
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                ⏰ Timestamp
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Status
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((detection, index) => (
-              <tr 
-                key={detection.id} 
-                className={`hover:bg-indigo-50 transition-colors ${
-                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                }`}
-              >
-                <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                  {detection.timestamp}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2 flex-wrap">
-                    {detection.depth > 0 && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-rose-100 text-rose-800 border border-rose-300">
-                        🕳️ Pothole
-                      </span>
-                    )}
-                    {detection.hasObstacle && detection.obstacleType === 'tree' && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-300">
-                        🌳 Tree
-                      </span>
-                    )}
-                    {detection.hasObstacle && detection.obstacleType === 'building' && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800 border border-blue-300">
-                        🏢 Building
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                  {detection.depth > 0 ? (
-                    <span className="text-rose-600">{detection.depth} cm</span>
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                  {detection.hasObstacle ? (
-                    <span className={detection.obstacleDistance <= 120 ? 'text-orange-600' : 'text-blue-600'}>
-                      {detection.obstacleDistance} cm
-                      {detection.obstacleDistance <= 120 && ' ⚠️'}
+          <tbody className="bg-white divide-y divide-slate-200">
+            {data.length > 0 ? (
+              data.map((row) => (
+                <tr key={row.id} className="hover:bg-slate-50 transition-colors duration-150">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                    {row.id.substring(0, 8)}...
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-600">
+                    {row.depth}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                    -
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                    -
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                    {row.timestamp}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+                      row.status === 'Critical' 
+                        ? 'bg-red-100 text-red-700 border border-red-200' 
+                        : 'bg-amber-100 text-amber-700 border border-amber-200'
+                    }`}>
+                      {row.status}
                     </span>
-                  ) : (
-                    <span className="text-gray-400">—</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 font-mono">
-                  {detection.lat.toFixed(4)}, {detection.lng.toFixed(4)}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="px-6 py-12 text-center">
+                  <div className="text-6xl mb-3">🔍</div>
+                  <p className="text-xl font-semibold text-slate-700">No detections yet</p>
+                  <p className="text-sm text-slate-500 mt-2">Waiting for data from Arduino...</p>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
     </div>
   );
 }
+
+DataTable.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      depth: PropTypes.number.isRequired,
+      timestamp: PropTypes.string.isRequired,
+      status: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};
 
 export default DataTable;
