@@ -90,9 +90,13 @@ void loop() {
     // --- 4. Live Updates to Firebase ---
     Firebase.setInt(fbdo, "/live/depth", depth);
     Firebase.setFloat(fbdo, "/live/obstacle", tof_cm); // Real-time ToF
+    
+    //Zaid paste your code here
+    
   }
 
   if (WiFi.status() != WL_CONNECTED && millis() % 10000 == 0) {
     Serial.println("Waiting for Wi-Fi...");
   }
 }
+
