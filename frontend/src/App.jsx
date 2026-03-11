@@ -8,8 +8,9 @@ import MapView from './components/MapView';
 import './App.css';
 
 function App() {
-  const [depthData, setDepthData] = useState([]);
+  const [detectionData, setDetectionData] = useState([]);
   const [liveDepth, setLiveDepth] = useState(0);
+  const [liveObstacle, setLiveObstacle] = useState(0);
   const [stats, setStats] = useState({
     totalDetections: 0,
     averageDepth: 0,
@@ -18,39 +19,62 @@ function App() {
   });
 
   useEffect(() => {
-    // Listen to LIVE depth (updates every 500ms)
+    // Live depth listener
     const liveDepthRef = ref(database, 'live/depth');
-    const liveUnsubscribe = onValue(liveDepthRef, (snapshot) => {
+    const liveDepthUnsubscribe = onValue(liveDepthRef, (snapshot) => {
       if (snapshot.exists()) {
         setLiveDepth(snapshot.val());
       }
     });
 
-    // Listen to depth history (only potholes > 10cm)
-    const depthRef = ref(database, 'detections/depth');
-    const historyUnsubscribe = onValue(depthRef, (snapshot) => {
+    // Live obstacle listener
+    const liveObstacleRef = ref(database, 'live/obstacle');
+    const liveObstacleUnsubscribe = onValue(liveObstacleRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setLiveObstacle(snapshot.val());
+      }
+    });
+
+    // Combined detection listener - listens to both depth and obstacle
+    const detectionsRef = ref(database, 'detections');
+    const detectionsUnsubscribe = onValue(detectionsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
-        const formattedData = Object.entries(data).map(([id, depth]) => ({
+        const depthData = data.depth || {};
+        const obstacleData = data.obstacle || {};
+
+        // Convert depth detections to array
+        const depthEntries = Object.entries(depthData).map(([id, depth]) => ({
           id,
           depth,
+          obstacle: null,
+          type: 'depth',
           timestamp: new Date().toLocaleString(),
-          status: depth > 15 ? 'Critical' : 'Warning'
+          status: depth > 20 ? 'Critical' : 'Warning'
         }));
 
-        // Sort by most recent (last items in array)
-        formattedData.reverse();
+        // Convert obstacle detections to array
+        const obstacleEntries = Object.entries(obstacleData).map(([id, distance]) => ({
+          id,
+          depth: null,
+          obstacle: distance,
+          type: 'obstacle',
+          timestamp: new Date().toLocaleString(),
+          status: distance >= 2 ? 'Critical' : 'Warning'
+        }));
 
-        setDepthData(formattedData);
-
-        // Calculate statistics
-        const depths = formattedData.map(d => d.depth);
-        const total = depths.length;
-        const avg = total > 0 ? (depths.reduce((a, b) => a + b, 0) / total).toFixed(1) : 0;
-        const max = total > 0 ? Math.max(...depths) : 0;
+        // Combine both arrays and sort by timestamp (newest first)
+        const combinedData = [...depthEntries, ...obstacleEntries];
+        combinedData.reverse();
         
-        // Count recent detections (last 10)
-        const recent = formattedData.slice(0, 10).length;
+        setDetectionData(combinedData);
+
+        // Calculate stats based on depth detections only
+        const depths = depthEntries.map(d => d.depth);
+        const total = combinedData.length;
+        const avg = depths.length > 0 ? (depths.reduce((a, b) => a + b, 0) / depths.length).toFixed(1) : 0;
+        const max = depths.length > 0 ? Math.max(...depths) : 0;
+        const recent = combinedData.slice(0, 10).length;
 
         setStats({
           totalDetections: total,
@@ -59,8 +83,7 @@ function App() {
           recentDetections: recent
         });
       } else {
-        // No data yet
-        setDepthData([]);
+        setDetectionData([]);
         setStats({
           totalDetections: 0,
           averageDepth: 0,
@@ -71,21 +94,18 @@ function App() {
     });
 
     return () => {
-      liveUnsubscribe();
-      historyUnsubscribe();
+      liveDepthUnsubscribe();
+      liveObstacleUnsubscribe();
+      detectionsUnsubscribe();
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100">
+    <div className="min-h-screen bg-white">
       <Header />
       <main className="max-w-7xl mx-auto px-6 py-8">
-        
-        {/* <div className="mb-8">
-          <MapView />
-        </div> */}
-        <StatsGrid stats={stats} liveDepth={liveDepth} />
-        <DataTable data={depthData} />
+        <StatsGrid stats={stats} liveDepth={liveDepth} liveObstacle={liveObstacle} />
+        <DataTable data={detectionData} />
       </main>
     </div>
   );

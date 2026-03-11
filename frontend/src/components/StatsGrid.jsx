@@ -2,13 +2,19 @@ import { AlertTriangle, Moon } from 'lucide-react';
 import PropTypes from 'prop-types';
 import StatsCard from './StatsCard';
 
-function StatsGrid({ stats, liveDepth }) {
+function StatsGrid({ stats, liveDepth, liveObstacle }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <StatsCard 
         icon="📡" 
         title="Live Road Depth" 
         value={liveDepth} 
+        unit="cm" 
+      />
+      <StatsCard 
+        icon="🚧" 
+        title="Live Obstacle Distance" 
+        value={liveObstacle} 
         unit="cm" 
       />
       <StatsCard 
@@ -23,12 +29,6 @@ function StatsGrid({ stats, liveDepth }) {
         value={stats.totalDetections} 
         unit="" 
       />
-      {/* <StatsCard 
-        icon="🔔" 
-        title="Recent Detections" 
-        value={stats.recentDetections} 
-        unit="" 
-      /> */}
     </div>
   );
 }
@@ -41,6 +41,7 @@ StatsGrid.propTypes = {
     recentDetections: PropTypes.number.isRequired,
   }).isRequired,
   liveDepth: PropTypes.number.isRequired,
+  liveObstacle: PropTypes.number.isRequired,
 };
 
 export default StatsGrid;
