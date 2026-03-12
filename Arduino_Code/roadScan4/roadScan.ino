@@ -91,7 +91,20 @@ void loop() {
     Firebase.setInt(fbdo, "/live/depth", depth);
     Firebase.setFloat(fbdo, "/live/obstacle", tof_cm); // Real-time ToF
     
-    //Zaid paste your code here
+    //// --- 5. Detection/Archiving Logic ---
+    // Pothole Detection (Ultrasonic)
+    if (depth > 10) {
+      Firebase.pushInt(fbdo, "/detections/depth", depth);
+      Serial.println(">>> POTHOLE ARCHIVED!");
+    }
+
+    // Obstacle Detection (ToF > 30cm)
+    if (tof_cm < 5.0) {
+      if (Firebase.pushFloat(fbdo, "/detections/obstacle", tof_cm)) {
+        Serial.println(">>> OBSTACLE DETECTED & ARCHIVED!");
+      }
+      delay(500); // Small debounce delay
+    }
     
   }
 
@@ -99,4 +112,5 @@ void loop() {
     Serial.println("Waiting for Wi-Fi...");
   }
 }
+
 
